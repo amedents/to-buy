@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#12100b" />
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+<link rel="manifest" href="manifest.webmanifest" />
 <title>To-Buy</title>
 <style>
   :root{
@@ -191,7 +192,8 @@
     r.onload=()=>{ try{
       const data=JSON.parse(r.result);
       const merge=confirm("Import list:\n\nOK = MERGE with this device's list\nCancel = REPLACE everything here");
-      state = merge ? mergeState(data) : { items: Array.isArray(data.items)? data.items : [] };
+      const clean=(arr)=>(Array.isArray(arr)?arr:[]).filter(i=>i&&typeof i.text==="string"&&i.text.trim()).map(i=>({id:i.id||uid(), text:String(i.text), bought:!!i.bought, ts:i.ts||Date.now()}));
+      state = merge ? mergeState(data) : { items: clean(data.items) };
       save(); render(); alert("Imported "+(merge?"and merged.":"(replaced)."));
     }catch(e){ alert("Couldn't read that file — is it a To-Buy backup?"); } };
     r.readAsText(file);
@@ -214,7 +216,7 @@
    SW can't refresh them. On resume/focus, refetch this page; if its build token changed, reload once.
    BUILD is the literal placeholder in the source (feature inert) and is stamped to a unique id at publish. */
 (function(){
-  var BUILD="20260606164552";
+  var BUILD="20260606192045";
   if(BUILD.indexOf("APP_BUILD")>-1) return;            // unstamped (local/dev) -> disabled
   var busy=false;
   function check(){
