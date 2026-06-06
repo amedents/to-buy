@@ -209,5 +209,30 @@
 })();
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}</script>
+<script>
+/* Auto-update: iOS home-screen apps resume a cached snapshot and never re-navigate, so a network-first
+   SW can't refresh them. On resume/focus, refetch this page; if its build token changed, reload once.
+   BUILD is the literal placeholder in the source (feature inert) and is stamped to a unique id at publish. */
+(function(){
+  var BUILD="20260606164552";
+  if(BUILD.indexOf("APP_BUILD")>-1) return;            // unstamped (local/dev) -> disabled
+  var busy=false;
+  function check(){
+    if(busy||document.visibilityState!=="visible"||!navigator.onLine) return;
+    busy=true;
+    fetch("./?_au="+Date.now(),{cache:"no-store"})
+      .then(function(r){ return r.ok? r.text():null; })
+      .then(function(t){
+        if(t){ var m=t.match(/var BUILD="([^"]+)"/);
+          if(m && m[1]!==BUILD && m[1].indexOf("APP_BUILD")<0){ location.reload(); return; } }
+        busy=false;
+      })
+      .catch(function(){ busy=false; });
+  }
+  document.addEventListener("visibilitychange",check);
+  window.addEventListener("pageshow",check);
+  window.addEventListener("focus",check);
+})();
+</script>
 </body>
 </html>
